@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk, Gdk #importamos las librerías que necesitamos
+import sys
+sys.path.insert(0, '../MFRC522-python')
+from Read2 import RfidMFRC522 #importamos el programa realizado en el puzzle 1
+import threading #importamos los threads
+
+class UIDWindow:
+	def __init__(self):
+		Gtk.init()
+		self.win = Gtk.Window() #creamos la ventana
+		self.win.set_title("Read uid")
+		self.win.connect("destroy", Gtk.main_quit)
+		self.win.set_size_request(250, 180)
+# creamos la caja para poner los elementos
+self.box = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 10) 
+		self.win.add(self.box)
+
+		textL = "Please, login with your university card"
+		self.boxL = Gtk.EventBox() #creamos una caja eventual para la etiqueta
+		self.boxL.override_background_color(0,Gdk.RGBA(0,200,255,0.7)) #color azul
+		self.label = Gtk.Label(textL) #creamos la etiqueta
+		self.label.set_size_request(400,80)
+		self.boxL.add(self.label)
+		self.box.pack_start(self.boxL, True, True, 0)
+
+		self.textB = "Clear"
+		self.button = Gtk.Button(label = self.textB) #creamos el botón
+		self.button.connect("clicked", self.btnClicked)
+		self.box.pack_start(self.button, True, True, 0)
+
+		thread = threading.Thread(target = self.readUID)
+		thread.setDaemon(True)
+		thread.start()
+
+		self.win.show_all()
+		Gtk.main()
+
+	def btnClicked(self, widget): #esta función se encarga de reiniciar la ventana una vez clicado el botón
+		textL = "Please, login with your university card."
+		self.label.set_label(textL)
+		self.boxL.override_background_color(0,Gdk.RGBA(0,200,255,0.7)) #color azul
+		thread = threading.Thread(target = self.readUID)
+		thread.start()
+
+	def readUID(self): #esta función se encarga de leer la tarjeta (puzzle1) y modificar la etiqueta
+		rf = RfidMFRC522()
+		textL = rf.read_uid()
+		self.label.set_label(textL)
+		self.boxL.override_background_color(0, Gdk.RGBA(255,0,0,0.9)) #color rojo
+if __name__ == "__main__":
+	window = UIDWindow()
